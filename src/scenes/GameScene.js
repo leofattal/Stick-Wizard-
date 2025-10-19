@@ -153,18 +153,35 @@ class GameScene extends Phaser.Scene {
             dash: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT)
         };
 
-        // Player 2 controls (using I, O, P for attacks - near arrow keys)
-        this.player2Keys = {
-            up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
-            down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
-            left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
-            right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
-            fireball: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I),
-            lightning: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O),
-            iceShard: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.U),
-            shield: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P),
-            dash: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)
-        };
+        // Player 2 controls - only if NOT in AI mode
+        if (!this.aiMode) {
+            // Player 2 controls (using I, O, P for attacks - near arrow keys)
+            this.player2Keys = {
+                up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
+                down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
+                left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
+                right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
+                fireball: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I),
+                lightning: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O),
+                iceShard: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.U),
+                shield: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P),
+                dash: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)
+            };
+        } else {
+            // AI mode - create dummy keys that won't respond to keyboard
+            this.player2Keys = {
+                up: { isDown: false },
+                down: { isDown: false },
+                left: { isDown: false },
+                right: { isDown: false },
+                fireball: { isDown: false },
+                lightning: { isDown: false },
+                iceShard: { isDown: false },
+                shield: { isDown: false },
+                dash: { isDown: false }
+            };
+            console.log('🤖 Player 2 keyboard controls disabled (AI mode)');
+        }
 
         // Setup mouse click for knockback targeting
         this.knockbackCaster = null;

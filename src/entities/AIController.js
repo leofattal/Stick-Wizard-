@@ -185,13 +185,21 @@ class AIController {
         const dx = targetX - this.wizard.sprite.x;
         const dy = targetY - this.wizard.sprite.y;
 
-        if (Math.abs(dx) > 20) {
-            if (dx > 0) keys.right.isDown = true;
+        // Clamp target to within bounds
+        const margin = 50;
+        const safeTargetX = Math.max(margin, Math.min(Constants.GAME_WIDTH - margin, targetX));
+        const safeTargetY = Math.max(margin, Math.min(Constants.GAME_HEIGHT - margin, targetY));
+
+        const safeDx = safeTargetX - this.wizard.sprite.x;
+        const safeDy = safeTargetY - this.wizard.sprite.y;
+
+        if (Math.abs(safeDx) > 20) {
+            if (safeDx > 0) keys.right.isDown = true;
             else keys.left.isDown = true;
         }
 
-        if (Math.abs(dy) > 20) {
-            if (dy > 0) keys.down.isDown = true;
+        if (Math.abs(safeDy) > 20) {
+            if (safeDy > 0) keys.down.isDown = true;
             else keys.up.isDown = true;
         }
     }
