@@ -170,15 +170,15 @@ class GameScene extends Phaser.Scene {
         } else {
             // AI mode - create dummy keys that won't respond to keyboard
             this.player2Keys = {
-                up: { isDown: false },
-                down: { isDown: false },
-                left: { isDown: false },
-                right: { isDown: false },
-                fireball: { isDown: false },
-                lightning: { isDown: false },
-                iceShard: { isDown: false },
-                shield: { isDown: false },
-                dash: { isDown: false }
+                up: { isDown: false, _justDown: false },
+                down: { isDown: false, _justDown: false },
+                left: { isDown: false, _justDown: false },
+                right: { isDown: false, _justDown: false },
+                fireball: { isDown: false, _justDown: false },
+                lightning: { isDown: false, _justDown: false },
+                iceShard: { isDown: false, _justDown: false },
+                shield: { isDown: false, _justDown: false },
+                dash: { isDown: false, _justDown: false }
             };
             console.log('🤖 Player 2 keyboard controls disabled (AI mode)');
         }

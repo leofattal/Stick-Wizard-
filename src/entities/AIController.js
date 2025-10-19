@@ -179,20 +179,23 @@ class AIController {
 
         switch (this.currentAction) {
             case 'fireball':
-                keys.fireball.isDown = true;
+                this.simulateKeyPress(keys.fireball);
+                this.currentAction = 'idle'; // Only fire once per decision
                 break;
 
             case 'lightning':
-                keys.lightning.isDown = true;
+                this.simulateKeyPress(keys.lightning);
+                this.currentAction = 'idle';
                 break;
 
             case 'iceShard':
-                keys.iceShard.isDown = true;
+                this.simulateKeyPress(keys.iceShard);
+                this.currentAction = 'idle';
                 break;
 
             case 'shield':
-                keys.shield.isDown = true;
-                this.currentAction = 'idle'; // Only shield once
+                this.simulateKeyPress(keys.shield);
+                this.currentAction = 'idle';
                 break;
 
             case 'advance':
@@ -210,6 +213,14 @@ class AIController {
             case 'getPowerUp':
                 this.moveToward(this.targetX, this.targetY, keys);
                 break;
+        }
+    }
+
+    simulateKeyPress(key) {
+        // Simulate a key press for AI (sets _justDown flag)
+        if (key) {
+            key.isDown = true;
+            key._justDown = true;
         }
     }
 
@@ -267,13 +278,15 @@ class AIController {
     }
 
     resetKeys(keys) {
-        keys.up.isDown = false;
-        keys.down.isDown = false;
-        keys.left.isDown = false;
-        keys.right.isDown = false;
-        keys.fireball.isDown = false;
-        keys.lightning.isDown = false;
-        keys.iceShard.isDown = false;
-        keys.shield.isDown = false;
+        // Reset all key states
+        const keyList = [keys.up, keys.down, keys.left, keys.right,
+                         keys.fireball, keys.lightning, keys.iceShard, keys.shield];
+
+        for (const key of keyList) {
+            if (key) {
+                key.isDown = false;
+                key._justDown = false;
+            }
+        }
     }
 }
