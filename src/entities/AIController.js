@@ -24,6 +24,19 @@ class AIController {
     }
 
     update(delta, keys) {
+        // Safety check - if wizard is dead, stop
+        if (!this.wizard.isAlive || !this.opponent.isAlive) {
+            this.resetKeys(keys);
+            return;
+        }
+
+        // Safety check - if wizard position is invalid, reset
+        if (!this.wizard.sprite || !this.wizard.sprite.x || !this.wizard.sprite.y) {
+            console.error('🚨 AI wizard sprite invalid!');
+            this.resetKeys(keys);
+            return;
+        }
+
         this.decisionTimer += delta;
 
         // Make decisions at regular intervals
@@ -87,32 +100,43 @@ class AIController {
 
     shouldShield() {
         // Check if projectiles are coming toward us
+        if (!this.wizard.scene.projectiles || this.wizard.scene.projectiles.length === 0) {
+            return false;
+        }
+
         const projectiles = this.wizard.scene.projectiles;
 
         for (const proj of projectiles) {
+            // Safety checks
+            if (!proj || !proj.sprite || !proj.sprite.body || !proj.owner) continue;
             if (proj.owner === this.wizard) continue; // Ignore our own projectiles
 
-            const distance = Phaser.Math.Distance.Between(
-                proj.sprite.x, proj.sprite.y,
-                this.wizard.sprite.x, this.wizard.sprite.y
-            );
-
-            // If projectile is close and coming toward us
-            if (distance < 200 && this.wizard.mana >= Constants.SHIELD.MANA_COST) {
-                const angle = Math.atan2(
-                    proj.sprite.body.velocity.y,
-                    proj.sprite.body.velocity.x
+            try {
+                const distance = Phaser.Math.Distance.Between(
+                    proj.sprite.x, proj.sprite.y,
+                    this.wizard.sprite.x, this.wizard.sprite.y
                 );
-                const projDirection = new Phaser.Math.Vector2(Math.cos(angle), Math.sin(angle));
-                const toUs = new Phaser.Math.Vector2(
-                    this.wizard.sprite.x - proj.sprite.x,
-                    this.wizard.sprite.y - proj.sprite.y
-                ).normalize();
 
-                // Check if projectile is heading toward us (dot product > 0.5)
-                if (projDirection.dot(toUs) > 0.5) {
-                    return true;
+                // If projectile is close and coming toward us
+                if (distance < 200 && this.wizard.mana >= Constants.SHIELD.MANA_COST) {
+                    const angle = Math.atan2(
+                        proj.sprite.body.velocity.y,
+                        proj.sprite.body.velocity.x
+                    );
+                    const projDirection = new Phaser.Math.Vector2(Math.cos(angle), Math.sin(angle));
+                    const toUs = new Phaser.Math.Vector2(
+                        this.wizard.sprite.x - proj.sprite.x,
+                        this.wizard.sprite.y - proj.sprite.y
+                    ).normalize();
+
+                    // Check if projectile is heading toward us (dot product > 0.5)
+                    if (projDirection.dot(toUs) > 0.5) {
+                        return true;
+                    }
                 }
+            } catch (error) {
+                console.error('🚨 Error in shouldShield:', error);
+                continue;
             }
         }
 
@@ -127,14 +151,22 @@ class AIController {
         let minDist = 999999;
 
         for (const powerUp of powerUps) {
-            const dist = Phaser.Math.Distance.Between(
-                this.wizard.sprite.x, this.wizard.sprite.y,
-                powerUp.sprite.x, powerUp.sprite.y
-            );
+            // Safety check
+            if (!powerUp || !powerUp.sprite || !powerUp.sprite.x || !powerUp.sprite.y) continue;
 
-            if (dist < minDist && dist < 400) {
-                minDist = dist;
-                nearest = powerUp;
+            try {
+                const dist = Phaser.Math.Distance.Between(
+                    this.wizard.sprite.x, this.wizard.sprite.y,
+                    powerUp.sprite.x, powerUp.sprite.y
+                );
+
+                if (dist < minDist && dist < 400) {
+                    minDist = dist;
+                    nearest = powerUp;
+                }
+            } catch (error) {
+                console.error('🚨 Error in findNearestPowerUp:', error);
+                continue;
             }
         }
 
