@@ -5,9 +5,152 @@ class VictoryScene extends Phaser.Scene {
 
     init(data) {
         this.winner = data.winner || 1;
+        this.aiMode = data.aiMode || false;
+        this.replay = data.replay || null;
     }
 
     create() {
+        // Play replay first if available
+        if (this.replay && this.replay.frames && this.replay.frames.length > 0) {
+            this.playReplay();
+            return; // Return early - replay will call showVictoryScreen() when done
+        }
+
+        // No replay - show victory screen immediately
+        this.showVictoryScreen();
+    }
+
+    playReplay() {
+        console.log('🎬 Playing replay...', this.replay.frames.length, 'frames');
+
+        // Dark background
+        this.cameras.main.setBackgroundColor('#000000');
+
+        // "REPLAY" text
+        const replayText = this.add.text(
+            Constants.GAME_WIDTH / 2,
+            50,
+            'REPLAY - FINAL MOMENTS',
+            {
+                fontSize: '32px',
+                fontFamily: 'Arial',
+                color: '#ffaa00'
+            }
+        ).setOrigin(0.5).setAlpha(0.8);
+
+        // Playback variables
+        let frameIndex = 0;
+        const playbackSpeed = 0.5; // Slow motion! (0.5 = half speed)
+
+        // Create graphics for rendering
+        this.replayGraphics = this.add.graphics();
+
+        // Playback timer
+        this.replayTimer = this.time.addEvent({
+            delay: 16 / playbackSpeed, // ~60fps adjusted for slow motion
+            callback: () => {
+                if (frameIndex >= this.replay.frames.length) {
+                    // Replay finished
+                    this.replayTimer.remove();
+                    this.replayGraphics.destroy();
+                    replayText.destroy();
+
+                    // Fade to victory screen
+                    this.cameras.main.fadeOut(500, 0, 0, 0);
+                    this.time.delayedCall(500, () => {
+                        this.showVictoryScreen();
+                    });
+                    return;
+                }
+
+                // Render frame
+                this.renderReplayFrame(this.replay.frames[frameIndex]);
+                frameIndex++;
+            },
+            loop: true
+        });
+    }
+
+    renderReplayFrame(frame) {
+        this.replayGraphics.clear();
+
+        // Draw arena background
+        this.replayGraphics.fillStyle(Constants.ARENA_BG);
+        this.replayGraphics.fillRect(0, 0, Constants.GAME_WIDTH, Constants.GAME_HEIGHT);
+
+        // Draw projectiles
+        if (frame.projectiles) {
+            frame.projectiles.forEach(proj => {
+                if (proj.type === 'fireball') {
+                    this.replayGraphics.fillStyle(0xff3300);
+                    this.replayGraphics.fillCircle(proj.x, proj.y, 20);
+                } else if (proj.type === 'iceshard') {
+                    this.replayGraphics.fillStyle(0x00ccff);
+                    this.replayGraphics.fillCircle(proj.x, proj.y, 18);
+                }
+            });
+        }
+
+        // Draw players
+        if (frame.player1) {
+            this.drawWizard(frame.player1, 1);
+        }
+        if (frame.player2) {
+            this.drawWizard(frame.player2, 2);
+        }
+    }
+
+    drawWizard(playerData, playerNumber) {
+        if (!playerData) return;
+
+        const color = playerData.color || (playerNumber === 1 ? Constants.PLAYER1_COLOR : Constants.PLAYER2_COLOR);
+
+        this.replayGraphics.save();
+        this.replayGraphics.translate(playerData.x, playerData.y);
+        this.replayGraphics.rotate(playerData.angle || 0);
+
+        // Head
+        this.replayGraphics.lineStyle(3, color, playerData.alpha || 1);
+        this.replayGraphics.strokeCircle(0, -40, 12);
+
+        // Body
+        this.replayGraphics.lineBetween(0, -28, 0, 0);
+
+        // Arms
+        this.replayGraphics.lineBetween(0, -20, -15, -5);
+        this.replayGraphics.lineBetween(0, -20, 15, -5);
+
+        // Legs
+        this.replayGraphics.lineBetween(0, 0, -12, 25);
+        this.replayGraphics.lineBetween(0, 0, 12, 25);
+
+        // Hat
+        this.replayGraphics.fillStyle(color, (playerData.alpha || 1) * 0.5);
+        this.replayGraphics.fillTriangle(-10, -52, 10, -52, 0, -72);
+
+        // Shield if active
+        if (playerData.isShielding) {
+            this.replayGraphics.lineStyle(3, 0x00ffff, 0.8);
+            this.replayGraphics.strokeCircle(0, -20, 40);
+        }
+
+        this.replayGraphics.restore();
+    }
+
+    showVictoryScreen() {
+        // Clear any existing graphics
+        if (this.replayGraphics) {
+            this.replayGraphics.destroy();
+        }
+
+        // Reset camera
+        this.cameras.main.setBackgroundColor(Constants.ARENA_BG);
+        this.cameras.main.fadeIn(500, 42, 42, 62);
+
+        this.createVictoryUI();
+    }
+
+    createVictoryUI() {
         // Background
         this.add.rectangle(
             Constants.GAME_WIDTH / 2,

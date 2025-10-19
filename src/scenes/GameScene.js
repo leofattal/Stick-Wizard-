@@ -10,6 +10,10 @@ class GameScene extends Phaser.Scene {
         this.aiMode = data.aiMode || false;
         console.log('🎮 Game started -', this.aiMode ? 'VS AI BOT' : '2 PLAYERS');
 
+        // Create replay recorder
+        this.replayRecorder = new ReplayRecorder(this);
+        this.replayRecorder.startRecording();
+
         // Create arena background
         this.createArena();
 
@@ -342,6 +346,11 @@ class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
+        // Record frame for replay
+        if (this.replayRecorder) {
+            this.replayRecorder.recordFrame();
+        }
+
         // Clear debug graphics
         this.debugGraphics.clear();
 
@@ -559,6 +568,9 @@ class GameScene extends Phaser.Scene {
     }
 
     handleGameOver(winnerNumber) {
+        // Stop recording and capture replay
+        const replay = this.replayRecorder ? this.replayRecorder.stopRecording() : null;
+
         // Check if both players are dead (tie)
         if (!this.player1.isAlive && !this.player2.isAlive) {
             console.log('🤝 TIE! Both players died!');
@@ -566,7 +578,7 @@ class GameScene extends Phaser.Scene {
             this.time.delayedCall(3000, () => {
                 // Reset time scale before transitioning
                 this.resetTimeScale();
-                this.scene.start('TieScene', { aiMode: this.aiMode });
+                this.scene.start('TieScene', { aiMode: this.aiMode, replay: replay });
             });
         } else {
             // Normal victory
@@ -575,7 +587,11 @@ class GameScene extends Phaser.Scene {
             this.time.delayedCall(3000, () => {
                 // Reset time scale before transitioning
                 this.resetTimeScale();
-                this.scene.start('VictoryScene', { winner: winnerNumber, aiMode: this.aiMode });
+                this.scene.start('VictoryScene', {
+                    winner: winnerNumber,
+                    aiMode: this.aiMode,
+                    replay: replay
+                });
             });
         }
     }
