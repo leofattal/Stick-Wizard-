@@ -511,6 +511,11 @@ class Wizard {
             this.scene.time.timeScale = 0.3; // Slow down time events
             this.scene.tweens.timeScale = 0.3; // Slow down tweens
 
+            // Mark this moment in the replay
+            if (this.scene.replayRecorder) {
+                this.scene.replayRecorder.markKillingBlow();
+            }
+
             this.die();
         }
     }

@@ -21,7 +21,7 @@ class VictoryScene extends Phaser.Scene {
     }
 
     playReplay() {
-        console.log('🎬 Playing replay...', this.replay.frames.length, 'frames');
+        console.log('🎬 Playing replay...', this.replay.frames.length, 'frames, killing blow at:', this.replay.killingBlowFrame);
 
         // Dark background
         this.cameras.main.setBackgroundColor('#000000');
@@ -30,7 +30,7 @@ class VictoryScene extends Phaser.Scene {
         const replayText = this.add.text(
             Constants.GAME_WIDTH / 2,
             50,
-            'REPLAY - FINAL MOMENTS',
+            'REPLAY',
             {
                 fontSize: '32px',
                 fontFamily: 'Arial',
@@ -40,14 +40,16 @@ class VictoryScene extends Phaser.Scene {
 
         // Playback variables
         let frameIndex = 0;
-        const playbackSpeed = 0.5; // Slow motion! (0.5 = half speed)
+        let currentSpeed = 2.0; // Start at 2x speed (fast forward)
+        const normalSpeed = 1.0;
+        const slowMoSpeed = 0.3; // Slow motion for killing blow
 
         // Create graphics for rendering
         this.replayGraphics = this.add.graphics();
 
         // Playback timer
         this.replayTimer = this.time.addEvent({
-            delay: 16 / playbackSpeed, // ~60fps adjusted for slow motion
+            delay: 16, // Base delay (60fps)
             callback: () => {
                 if (frameIndex >= this.replay.frames.length) {
                     // Replay finished
@@ -61,6 +63,37 @@ class VictoryScene extends Phaser.Scene {
                         this.showVictoryScreen();
                     });
                     return;
+                }
+
+                // Check if we're approaching or at the killing blow
+                const killingBlowFrame = this.replay.killingBlowFrame || this.replay.frames.length - 60;
+                const framesBeforeKillingBlow = 180; // Start slowing 3 seconds before (to catch the spell being cast)
+                const framesAfterKillingBlow = 90; // Continue for 1.5 seconds after
+
+                if (frameIndex >= killingBlowFrame - framesBeforeKillingBlow &&
+                    frameIndex <= killingBlowFrame + framesAfterKillingBlow) {
+                    // SLOW MOTION mode
+                    if (currentSpeed !== slowMoSpeed) {
+                        currentSpeed = slowMoSpeed;
+                        this.replayTimer.delay = 16 / slowMoSpeed;
+                        replayText.setText('REPLAY - SLOW MOTION');
+                        replayText.setColor('#ff3300');
+                        console.log('🎬 Entering SLOW MOTION at frame:', frameIndex);
+                    }
+                } else if (frameIndex < killingBlowFrame - framesBeforeKillingBlow - 60) {
+                    // Fast forward early parts
+                    if (currentSpeed !== 2.0) {
+                        currentSpeed = 2.0;
+                        this.replayTimer.delay = 16 / 2.0;
+                        replayText.setText('REPLAY - FAST FORWARD');
+                    }
+                } else {
+                    // Normal speed transition
+                    if (currentSpeed !== normalSpeed) {
+                        currentSpeed = normalSpeed;
+                        this.replayTimer.delay = 16 / normalSpeed;
+                        replayText.setText('REPLAY');
+                    }
                 }
 
                 // Render frame

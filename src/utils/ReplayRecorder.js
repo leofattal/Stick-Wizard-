@@ -2,14 +2,15 @@ class ReplayRecorder {
     constructor(scene) {
         this.scene = scene;
         this.frames = [];
-        this.maxFrames = 180; // Record last 3 seconds at 60fps
         this.isRecording = false;
         this.replayData = null;
+        this.killingBlowFrame = null; // Track when killing blow happens
     }
 
     startRecording() {
         this.isRecording = true;
         this.frames = [];
+        this.killingBlowFrame = null;
         console.log('📹 Replay recorder started');
     }
 
@@ -19,6 +20,7 @@ class ReplayRecorder {
         // Capture current game state
         const frame = {
             timestamp: Date.now(),
+            frameNumber: this.frames.length,
             player1: this.capturePlayerState(this.scene.player1),
             player2: this.capturePlayerState(this.scene.player2),
             projectiles: this.captureProjectiles(),
@@ -26,11 +28,12 @@ class ReplayRecorder {
         };
 
         this.frames.push(frame);
+    }
 
-        // Keep only last N frames (rolling buffer)
-        if (this.frames.length > this.maxFrames) {
-            this.frames.shift();
-        }
+    markKillingBlow() {
+        // Mark the current frame as when the killing blow happened
+        this.killingBlowFrame = this.frames.length - 1;
+        console.log('💀 Killing blow marked at frame:', this.killingBlowFrame);
     }
 
     capturePlayerState(player) {
@@ -83,9 +86,10 @@ class ReplayRecorder {
         this.isRecording = false;
         this.replayData = {
             frames: [...this.frames],
-            duration: this.frames.length
+            duration: this.frames.length,
+            killingBlowFrame: this.killingBlowFrame
         };
-        console.log('🎬 Replay captured:', this.frames.length, 'frames');
+        console.log('🎬 Replay captured:', this.frames.length, 'frames, killing blow at frame:', this.killingBlowFrame);
         return this.replayData;
     }
 
