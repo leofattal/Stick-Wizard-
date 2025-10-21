@@ -22,6 +22,8 @@ class VictoryScene extends Phaser.Scene {
 
     playReplay() {
         console.log('🎬 Playing replay...', this.replay.frames.length, 'frames');
+        console.log('🎬 First frame:', this.replay.frames[0]);
+        console.log('🎬 Last frame:', this.replay.frames[this.replay.frames.length - 1]);
 
         // Dark background
         this.cameras.main.setBackgroundColor('#000000');
@@ -77,6 +79,8 @@ class VictoryScene extends Phaser.Scene {
         // Draw arena background
         this.replayGraphics.fillStyle(Constants.ARENA_BG);
         this.replayGraphics.fillRect(0, 0, Constants.GAME_WIDTH, Constants.GAME_HEIGHT);
+
+        console.log('🎬 Rendering frame:', frame);
 
         // Draw projectiles
         if (frame.projectiles) {
