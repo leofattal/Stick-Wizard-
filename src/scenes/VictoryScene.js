@@ -22,8 +22,6 @@ class VictoryScene extends Phaser.Scene {
 
     playReplay() {
         console.log('🎬 Playing replay...', this.replay.frames.length, 'frames');
-        console.log('🎬 First frame:', this.replay.frames[0]);
-        console.log('🎬 Last frame:', this.replay.frames[this.replay.frames.length - 1]);
 
         // Dark background
         this.cameras.main.setBackgroundColor('#000000');
@@ -80,8 +78,6 @@ class VictoryScene extends Phaser.Scene {
         this.replayGraphics.fillStyle(Constants.ARENA_BG);
         this.replayGraphics.fillRect(0, 0, Constants.GAME_WIDTH, Constants.GAME_HEIGHT);
 
-        console.log('🎬 Rendering frame:', frame);
-
         // Draw projectiles
         if (frame.projectiles) {
             frame.projectiles.forEach(proj => {
@@ -108,37 +104,34 @@ class VictoryScene extends Phaser.Scene {
         if (!playerData) return;
 
         const color = playerData.color || (playerNumber === 1 ? Constants.PLAYER1_COLOR : Constants.PLAYER2_COLOR);
-
-        this.replayGraphics.save();
-        this.replayGraphics.translate(playerData.x, playerData.y);
-        this.replayGraphics.rotate(playerData.angle || 0);
+        const x = playerData.x;
+        const y = playerData.y;
+        const alpha = playerData.alpha || 1;
 
         // Head
-        this.replayGraphics.lineStyle(3, color, playerData.alpha || 1);
-        this.replayGraphics.strokeCircle(0, -40, 12);
+        this.replayGraphics.lineStyle(3, color, alpha);
+        this.replayGraphics.strokeCircle(x, y - 40, 12);
 
         // Body
-        this.replayGraphics.lineBetween(0, -28, 0, 0);
+        this.replayGraphics.lineBetween(x, y - 28, x, y);
 
         // Arms
-        this.replayGraphics.lineBetween(0, -20, -15, -5);
-        this.replayGraphics.lineBetween(0, -20, 15, -5);
+        this.replayGraphics.lineBetween(x, y - 20, x - 15, y - 5);
+        this.replayGraphics.lineBetween(x, y - 20, x + 15, y - 5);
 
         // Legs
-        this.replayGraphics.lineBetween(0, 0, -12, 25);
-        this.replayGraphics.lineBetween(0, 0, 12, 25);
+        this.replayGraphics.lineBetween(x, y, x - 12, y + 25);
+        this.replayGraphics.lineBetween(x, y, x + 12, y + 25);
 
         // Hat
-        this.replayGraphics.fillStyle(color, (playerData.alpha || 1) * 0.5);
-        this.replayGraphics.fillTriangle(-10, -52, 10, -52, 0, -72);
+        this.replayGraphics.fillStyle(color, alpha * 0.5);
+        this.replayGraphics.fillTriangle(x - 10, y - 52, x + 10, y - 52, x, y - 72);
 
         // Shield if active
         if (playerData.isShielding) {
             this.replayGraphics.lineStyle(3, 0x00ffff, 0.8);
-            this.replayGraphics.strokeCircle(0, -20, 40);
+            this.replayGraphics.strokeCircle(x, y - 20, 40);
         }
-
-        this.replayGraphics.restore();
     }
 
     showVictoryScreen() {
