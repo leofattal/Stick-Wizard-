@@ -5,13 +5,25 @@ class ReplayRecorder {
         this.isRecording = false;
         this.replayData = null;
         this.killingBlowFrame = null; // Track when killing blow happens
+        this.lightningStrikes = []; // Track lightning effects
     }
 
     startRecording() {
         this.isRecording = true;
         this.frames = [];
         this.killingBlowFrame = null;
+        this.lightningStrikes = [];
         console.log('📹 Replay recorder started');
+    }
+
+    recordLightningStrike(fromX, fromY, toX, toY) {
+        if (!this.isRecording) return;
+
+        this.lightningStrikes.push({
+            frameNumber: this.frames.length,
+            fromX, fromY, toX, toY,
+            timestamp: Date.now()
+        });
     }
 
     recordFrame() {
@@ -87,9 +99,10 @@ class ReplayRecorder {
         this.replayData = {
             frames: [...this.frames],
             duration: this.frames.length,
-            killingBlowFrame: this.killingBlowFrame
+            killingBlowFrame: this.killingBlowFrame,
+            lightningStrikes: [...this.lightningStrikes]
         };
-        console.log('🎬 Replay captured:', this.frames.length, 'frames, killing blow at frame:', this.killingBlowFrame);
+        console.log('🎬 Replay captured:', this.frames.length, 'frames, killing blow at frame:', this.killingBlowFrame, 'lightning strikes:', this.lightningStrikes.length);
         return this.replayData;
     }
 

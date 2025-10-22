@@ -520,6 +520,11 @@ class GameScene extends Phaser.Scene {
     }
 
     createLightningEffect(x1, y1, x2, y2, blocked) {
+        // Record in replay
+        if (this.replayRecorder && !blocked) {
+            this.replayRecorder.recordLightningStrike(x1, y1, x2, y2);
+        }
+
         const lightning = this.add.graphics();
         lightning.lineStyle(4, blocked ? 0xffff00 : 0x00ffff, 1);
 

@@ -47,6 +47,9 @@ class VictoryScene extends Phaser.Scene {
         // Create graphics for rendering
         this.replayGraphics = this.add.graphics();
 
+        // Track active lightning strikes (frameNumber -> graphics)
+        this.activeLightning = [];
+
         // Playback timer
         this.replayTimer = this.time.addEvent({
             delay: 16, // Base delay (60fps)
@@ -97,37 +100,66 @@ class VictoryScene extends Phaser.Scene {
                 }
 
                 // Render frame
-                this.renderReplayFrame(this.replay.frames[frameIndex]);
+                this.renderReplayFrame(this.replay.frames[frameIndex], frameIndex);
                 frameIndex++;
             },
             loop: true
         });
     }
 
-    renderReplayFrame(frame) {
+    renderReplayFrame(frame, frameIndex) {
         this.replayGraphics.clear();
 
         // Draw arena background
         this.replayGraphics.fillStyle(Constants.ARENA_BG);
         this.replayGraphics.fillRect(0, 0, Constants.GAME_WIDTH, Constants.GAME_HEIGHT);
 
-        // Draw projectiles
+        // Clean up old lightning strikes
+        this.activeLightning = this.activeLightning.filter(lightning => {
+            if (frameIndex - lightning.frameNumber > 10) {
+                lightning.graphics.destroy();
+                return false;
+            }
+            return true;
+        });
+
+        // Check for new lightning strikes at this frame
+        if (this.replay.lightningStrikes) {
+            const strikesThisFrame = this.replay.lightningStrikes.filter(s => s.frameNumber === frameIndex);
+            strikesThisFrame.forEach(strike => {
+                const lightningGfx = this.add.graphics();
+                this.drawLightning(lightningGfx, strike.fromX, strike.fromY, strike.toX, strike.toY);
+                this.activeLightning.push({
+                    frameNumber: frameIndex,
+                    graphics: lightningGfx
+                });
+            });
+        }
+
+        // Draw projectiles with improved visuals
         if (frame.projectiles) {
             frame.projectiles.forEach(proj => {
                 if (proj.type === 'fireball') {
-                    // Fireball - orange circle
-                    this.replayGraphics.fillStyle(0xff3300);
+                    // Fireball - layered with glow like the real thing
+                    // Outer glow
+                    this.replayGraphics.fillStyle(0xff6600, 0.5);
+                    this.replayGraphics.fillCircle(proj.x, proj.y, 24);
+                    // Main body
+                    this.replayGraphics.fillStyle(0xff3300, 1);
                     this.replayGraphics.fillCircle(proj.x, proj.y, 20);
+                    // Inner bright core
+                    this.replayGraphics.fillStyle(0xffff00, 0.8);
+                    this.replayGraphics.fillCircle(proj.x, proj.y, 12);
                 } else if (proj.type === 'iceshard') {
-                    // Ice shard - cyan circle
-                    this.replayGraphics.fillStyle(0x00ccff);
-                    this.replayGraphics.fillCircle(proj.x, proj.y, 18);
-                } else if (proj.type === 'lightning') {
-                    // Lightning - yellow/white bolt
-                    this.replayGraphics.lineStyle(4, 0xffff00, 1);
-                    this.replayGraphics.strokeCircle(proj.x, proj.y, 15);
-                    this.replayGraphics.fillStyle(0xffffff, 0.8);
-                    this.replayGraphics.fillCircle(proj.x, proj.y, 10);
+                    // Ice shard - crystal shape like the real thing
+                    const size = 18;
+                    // Crystal shape
+                    this.replayGraphics.fillStyle(0x00ccff, 0.8);
+                    this.replayGraphics.fillTriangle(proj.x - size, proj.y, proj.x + size, proj.y, proj.x, proj.y - size * 1.5);
+                    this.replayGraphics.fillTriangle(proj.x - size, proj.y, proj.x + size, proj.y, proj.x, proj.y + size * 1.5);
+                    // Highlight
+                    this.replayGraphics.fillStyle(0xffffff, 0.6);
+                    this.replayGraphics.fillTriangle(proj.x - size * 0.3, proj.y, proj.x + size * 0.3, proj.y, proj.x, proj.y - size * 0.8);
                 }
             });
         }
@@ -138,6 +170,38 @@ class VictoryScene extends Phaser.Scene {
         }
         if (frame.player2) {
             this.drawWizard(frame.player2, 2);
+        }
+    }
+
+    drawLightning(graphics, x1, y1, x2, y2) {
+        graphics.lineStyle(4, 0x00ffff, 1);
+
+        // Draw jagged lightning bolt
+        const steps = 8;
+        const dx = (x2 - x1) / steps;
+        const dy = (y2 - y1) / steps;
+
+        graphics.beginPath();
+        graphics.moveTo(x1, y1);
+
+        for (let i = 1; i < steps; i++) {
+            const jitterX = (Math.random() - 0.5) * 40;
+            const jitterY = (Math.random() - 0.5) * 40;
+            graphics.lineTo(x1 + dx * i + jitterX, y1 + dy * i + jitterY);
+        }
+
+        graphics.lineTo(x2, y2);
+        graphics.strokePath();
+
+        // Add branching arcs
+        for (let i = 0; i < 3; i++) {
+            const branchX = x1 + (x2 - x1) * (0.3 + Math.random() * 0.4);
+            const branchY = y1 + (y2 - y1) * (0.3 + Math.random() * 0.4);
+            const endX = branchX + (Math.random() - 0.5) * 60;
+            const endY = branchY + (Math.random() - 0.5) * 60;
+
+            graphics.lineStyle(2, 0x00ffff, 0.7);
+            graphics.lineBetween(branchX, branchY, endX, endY);
         }
     }
 
