@@ -14,6 +14,11 @@ class GameScene extends Phaser.Scene {
         this.replayRecorder = new ReplayRecorder(this);
         this.replayRecorder.startRecording();
 
+        // Create conjugation quiz system
+        this.conjugationQuiz = new ConjugationQuiz(this);
+        this.player1PendingAction = null;
+        this.player2PendingAction = null;
+
         // Create arena background
         this.createArena();
 

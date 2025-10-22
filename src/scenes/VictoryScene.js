@@ -26,11 +26,11 @@ class VictoryScene extends Phaser.Scene {
         // Dark background
         this.cameras.main.setBackgroundColor('#000000');
 
-        // "REPLAY" text
+        // "REPLAY" text (in French)
         const replayText = this.add.text(
             Constants.GAME_WIDTH / 2,
             50,
-            'REPLAY',
+            'RELECTURE',
             {
                 fontSize: '32px',
                 fontFamily: 'Arial',
@@ -49,6 +49,22 @@ class VictoryScene extends Phaser.Scene {
 
         // Track active lightning strikes (frameNumber -> graphics)
         this.activeLightning = [];
+
+        // French conjugation display
+        this.conjugationTexts = [];
+        this.conjugationTimer = 0;
+
+        // French verbs for conjugation (present tense - "to do" verbs)
+        this.frenchVerbs = [
+            { verb: 'FAIRE', conjugations: ['je fais', 'tu fais', 'il/elle fait', 'nous faisons', 'vous faites', 'ils/elles font'] },
+            { verb: 'JOUER', conjugations: ['je joue', 'tu joues', 'il/elle joue', 'nous jouons', 'vous jouez', 'ils/elles jouent'] },
+            { verb: 'LANCER', conjugations: ['je lance', 'tu lances', 'il/elle lance', 'nous lançons', 'vous lancez', 'ils/elles lancent'] },
+            { verb: 'ATTAQUER', conjugations: ['j\'attaque', 'tu attaques', 'il/elle attaque', 'nous attaquons', 'vous attaquez', 'ils/elles attaquent'] },
+            { verb: 'DÉFENDRE', conjugations: ['je défends', 'tu défends', 'il/elle défend', 'nous défendons', 'vous défendez', 'ils/elles défendent'] },
+            { verb: 'GAGNER', conjugations: ['je gagne', 'tu gagnes', 'il/elle gagne', 'nous gagnons', 'vous gagnez', 'ils/elles gagnent'] },
+            { verb: 'PERDRE', conjugations: ['je perds', 'tu perds', 'il/elle perd', 'nous perdons', 'vous perdez', 'ils/elles perdent'] },
+            { verb: 'COMBATTRE', conjugations: ['je combats', 'tu combats', 'il/elle combat', 'nous combattons', 'vous combattez', 'ils/elles combattent'] }
+        ];
 
         // Playback timer
         this.replayTimer = this.time.addEvent({
@@ -79,7 +95,7 @@ class VictoryScene extends Phaser.Scene {
                     if (currentSpeed !== slowMoSpeed) {
                         currentSpeed = slowMoSpeed;
                         this.replayTimer.delay = 16 / slowMoSpeed;
-                        replayText.setText('REPLAY - SLOW MOTION');
+                        replayText.setText('RALENTI - MOMENTS FINAUX'); // French: Slow motion - Final moments
                         replayText.setColor('#ff3300');
                         console.log('🎬 Entering SLOW MOTION at frame:', frameIndex);
                     }
@@ -88,15 +104,21 @@ class VictoryScene extends Phaser.Scene {
                     if (currentSpeed !== 2.0) {
                         currentSpeed = 2.0;
                         this.replayTimer.delay = 16 / 2.0;
-                        replayText.setText('REPLAY - FAST FORWARD');
+                        replayText.setText('RELECTURE ACCÉLÉRÉE'); // French: Fast replay
                     }
                 } else {
                     // Normal speed transition
                     if (currentSpeed !== normalSpeed) {
                         currentSpeed = normalSpeed;
                         this.replayTimer.delay = 16 / normalSpeed;
-                        replayText.setText('REPLAY');
+                        replayText.setText('RELECTURE'); // French: Replay
                     }
+                }
+
+                // Show French conjugations periodically
+                this.conjugationTimer++;
+                if (this.conjugationTimer % 90 === 0) { // Every 1.5 seconds
+                    this.showRandomConjugation();
                 }
 
                 // Render frame
@@ -105,6 +127,40 @@ class VictoryScene extends Phaser.Scene {
             },
             loop: true
         });
+    }
+
+    showRandomConjugation() {
+        // Pick a random verb
+        const verbData = Phaser.Utils.Array.GetRandom(this.frenchVerbs);
+
+        // Pick a random conjugation
+        const conjugation = Phaser.Utils.Array.GetRandom(verbData.conjugations);
+
+        // Random position on the sides
+        const x = Math.random() < 0.5 ? 100 : Constants.GAME_WIDTH - 100;
+        const y = 150 + Math.random() * 300;
+
+        // Create text
+        const text = this.add.text(x, y, conjugation, {
+            fontSize: '24px',
+            fontFamily: 'Arial',
+            fontStyle: 'italic',
+            color: '#ffff00',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5).setAlpha(0);
+
+        // Fade in and out
+        this.tweens.add({
+            targets: text,
+            alpha: 1,
+            duration: 300,
+            yoyo: true,
+            hold: 1200,
+            onComplete: () => text.destroy()
+        });
+
+        this.conjugationTexts.push(text);
     }
 
     renderReplayFrame(frame, frameIndex) {

@@ -188,7 +188,7 @@ class Wizard {
         // Fireball
         if (Phaser.Input.Keyboard.JustDown(keys.fireball)) {
             if (this.canCastSpell(Constants.FIREBALL)) {
-                this.castFireball();
+                this.requestSpellCast('fireball');
             } else {
                 console.log('🚫 Cannot cast fireball - Cooldown:', this.fireballCooldown.toFixed(0), 'ms, Mana:', this.mana.toFixed(0));
             }
@@ -196,22 +196,54 @@ class Wizard {
 
         // Lightning
         if (Phaser.Input.Keyboard.JustDown(keys.lightning) && this.canCastSpell(Constants.LIGHTNING)) {
-            this.castLightning();
+            this.requestSpellCast('lightning');
         }
 
         // Ice Shard
         if (keys.iceShard && Phaser.Input.Keyboard.JustDown(keys.iceShard) && this.canCastSpell(Constants.ICE_SHARD)) {
-            this.castIceShard();
+            this.requestSpellCast('iceshard');
         }
 
         // Shield
         if (Phaser.Input.Keyboard.JustDown(keys.shield) && this.canCastShield()) {
-            this.activateShield();
+            this.requestSpellCast('shield');
         }
 
         // Dash
         if (Phaser.Input.Keyboard.JustDown(keys.dash) && this.dashCooldown <= 0) {
             this.dash(keys);
+        }
+    }
+
+    requestSpellCast(spellType) {
+        // Show conjugation quiz
+        this.scene.conjugationQuiz.showQuiz(
+            () => {
+                // Correct answer - cast spell
+                console.log('✓ Correct conjugation! Casting', spellType);
+                this.executeSpell(spellType);
+            },
+            () => {
+                // Wrong answer - no spell
+                console.log('✗ Wrong conjugation! Spell failed.');
+            }
+        );
+    }
+
+    executeSpell(spellType) {
+        switch(spellType) {
+            case 'fireball':
+                this.castFireball();
+                break;
+            case 'lightning':
+                this.castLightning();
+                break;
+            case 'iceshard':
+                this.castIceShard();
+                break;
+            case 'shield':
+                this.activateShield();
+                break;
         }
     }
 
