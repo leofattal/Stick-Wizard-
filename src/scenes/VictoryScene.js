@@ -115,11 +115,19 @@ class VictoryScene extends Phaser.Scene {
         if (frame.projectiles) {
             frame.projectiles.forEach(proj => {
                 if (proj.type === 'fireball') {
+                    // Fireball - orange circle
                     this.replayGraphics.fillStyle(0xff3300);
                     this.replayGraphics.fillCircle(proj.x, proj.y, 20);
                 } else if (proj.type === 'iceshard') {
+                    // Ice shard - cyan circle
                     this.replayGraphics.fillStyle(0x00ccff);
                     this.replayGraphics.fillCircle(proj.x, proj.y, 18);
+                } else if (proj.type === 'lightning') {
+                    // Lightning - yellow/white bolt
+                    this.replayGraphics.lineStyle(4, 0xffff00, 1);
+                    this.replayGraphics.strokeCircle(proj.x, proj.y, 15);
+                    this.replayGraphics.fillStyle(0xffffff, 0.8);
+                    this.replayGraphics.fillCircle(proj.x, proj.y, 10);
                 }
             });
         }
