@@ -83,6 +83,11 @@ class ConjugationQuiz {
         this.onCorrect = onCorrect;
         this.onIncorrect = onIncorrect;
 
+        // PAUSE THE GAME
+        this.scene.physics.pause();
+        this.scene.tweens.pauseAll();
+        this.wasPaused = true;
+
         // Pick random verb and pronoun
         const verb = Phaser.Utils.Array.GetRandom(this.verbs);
         const pronouns = Object.keys(verb.conjugations);
@@ -221,16 +226,27 @@ class ConjugationQuiz {
 
             this.scene.time.delayedCall(500, () => {
                 this.hideQuiz();
+                // RESUME THE GAME
+                if (this.wasPaused) {
+                    this.scene.physics.resume();
+                    this.scene.tweens.resumeAll();
+                    this.wasPaused = false;
+                }
                 if (this.onCorrect) this.onCorrect();
             });
         } else {
-            // Wrong answer - flash red
+            // Wrong answer - flash red and close quiz
             bg.setFillStyle(0xff0000);
             buttonText.setText('✗ ' + selectedAnswer);
 
             this.scene.time.delayedCall(500, () => {
-                bg.setFillStyle(0x4444ff);
-                buttonText.setText(selectedAnswer);
+                this.hideQuiz();
+                // RESUME THE GAME even on wrong answer
+                if (this.wasPaused) {
+                    this.scene.physics.resume();
+                    this.scene.tweens.resumeAll();
+                    this.wasPaused = false;
+                }
                 if (this.onIncorrect) this.onIncorrect();
             });
         }
