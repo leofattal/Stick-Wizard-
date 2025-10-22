@@ -4,6 +4,19 @@ class MenuScene extends Phaser.Scene {
     }
 
     create() {
+        // Start background music
+        const music = document.getElementById('background-music');
+        if (music) {
+            music.volume = 0.3; // Set volume to 30%
+            music.play().catch(e => {
+                console.log('Music autoplay prevented. Click to start music.');
+                // Add click listener to start music on first interaction
+                document.addEventListener('click', () => {
+                    music.play();
+                }, { once: true });
+            });
+        }
+
         // Background
         this.add.rectangle(
             Constants.GAME_WIDTH / 2,
