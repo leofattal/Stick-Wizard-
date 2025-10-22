@@ -44,7 +44,7 @@ class MenuScene extends Phaser.Scene {
         this.add.text(
             Constants.GAME_WIDTH / 2,
             220,
-            'Battle of Magical Stickmen',
+            'Learn French Through Magical Combat',
             {
                 fontSize: '24px',
                 fontFamily: 'Arial',
@@ -52,19 +52,11 @@ class MenuScene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        // Play button (2 Player)
+        // Play button (AI only)
         const playButton = this.createButton(
             Constants.GAME_WIDTH / 2,
-            320,
-            '2 PLAYERS',
-            () => this.scene.start('GameScene', { aiMode: false })
-        );
-
-        // AI button
-        const aiButton = this.createButton(
-            Constants.GAME_WIDTH / 2,
-            420,
-            'VS AI BOT',
+            370,
+            'PLAY',
             () => this.scene.start('GameScene', { aiMode: true })
         );
 
@@ -206,32 +198,18 @@ class MenuScene extends Phaser.Scene {
     createControlsDisplay() {
         const controlsY = 480;
 
-        // Player 1 controls
+        // Player controls (centered)
         this.add.text(
-            200,
+            Constants.GAME_WIDTH / 2,
             controlsY,
-            'PLAYER 1\nMove: WASD\nFireball: Q\nLightning: E\nIce Shard: F\nShield: R\nDash: SHIFT',
+            'CONTROLS\nMove: WASD\nFireball: Q\nLightning: E\nIce Shard: F\nShield: R\nDash: SHIFT\n\nConjugate French verbs correctly to cast spells!',
             {
-                fontSize: '16px',
+                fontSize: '18px',
                 fontFamily: 'Arial',
-                color: '#ff6666',
-                align: 'left',
+                color: '#ffaa00',
+                align: 'center',
                 lineSpacing: 8
             }
-        );
-
-        // Player 2 controls
-        this.add.text(
-            Constants.GAME_WIDTH - 200,
-            controlsY,
-            'PLAYER 2\nMove: ARROWS\nFireball: I\nLightning: O\nIce Shard: U\nShield: P\nDash: ENTER',
-            {
-                fontSize: '16px',
-                fontFamily: 'Arial',
-                color: '#6666ff',
-                align: 'right',
-                lineSpacing: 8
-            }
-        ).setOrigin(1, 0);
+        ).setOrigin(0.5, 0);
     }
 }
