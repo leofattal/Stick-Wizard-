@@ -9,6 +9,7 @@
             margin: 0;
             padding: 0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
@@ -17,11 +18,20 @@
         }
         #game-container {
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+        #music-player {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <div id="game-container"></div>
+
+    <!-- Music Player -->
+    <div id="music-player">
+        <iframe allow="autoplay *; encrypted-media *;" frameborder="0" height="150" style="width:100%;max-width:660px;overflow:hidden;background:transparent;" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation" src="https://embed.music.apple.com/us/album/harry-potter-expecto-patronum-trap-mix/1780337790?i=1780337792"></iframe>
+    </div>
 
     <!-- Phaser 3 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
