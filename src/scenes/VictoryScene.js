@@ -70,12 +70,15 @@ class VictoryScene extends Phaser.Scene {
 
                 // Check if we're approaching or at the killing blow
                 const killingBlowFrame = this.replay.killingBlowFrame || this.replay.frames.length - 60;
-                const framesBeforeKillingBlow = 180; // Start slowing 3 seconds before (to catch the spell being cast)
+                const framesBeforeKillingBlow = 240; // Start slowing 4 seconds before (to catch the spell being fired)
                 const framesAfterKillingBlow = 90; // Continue for 1.5 seconds after
 
-                if (frameIndex >= killingBlowFrame - framesBeforeKillingBlow &&
+                // Calculate when to start slow motion (at the start of the killing shot)
+                const slowMotionStartFrame = killingBlowFrame - framesBeforeKillingBlow;
+
+                if (frameIndex >= slowMotionStartFrame &&
                     frameIndex <= killingBlowFrame + framesAfterKillingBlow) {
-                    // SLOW MOTION mode
+                    // SLOW MOTION mode - from when killing shot is fired until after impact
                     if (currentSpeed !== slowMoSpeed) {
                         currentSpeed = slowMoSpeed;
                         this.replayTimer.delay = 16 / slowMoSpeed;
@@ -83,19 +86,12 @@ class VictoryScene extends Phaser.Scene {
                         replayText.setColor('#ff3300');
                         console.log('🎬 Entering SLOW MOTION at frame:', frameIndex);
                     }
-                } else if (frameIndex < killingBlowFrame - framesBeforeKillingBlow - 60) {
-                    // Fast forward early parts
-                    if (currentSpeed !== 2.0) {
-                        currentSpeed = 2.0;
-                        this.replayTimer.delay = 16 / 2.0;
+                } else if (frameIndex < slowMotionStartFrame) {
+                    // Fast forward everything before the killing shot
+                    if (currentSpeed !== 3.0) {
+                        currentSpeed = 3.0; // Even faster to get to the action
+                        this.replayTimer.delay = 16 / 3.0;
                         replayText.setText('RELECTURE ACCÉLÉRÉE'); // French: Fast replay
-                    }
-                } else {
-                    // Normal speed transition
-                    if (currentSpeed !== normalSpeed) {
-                        currentSpeed = normalSpeed;
-                        this.replayTimer.delay = 16 / normalSpeed;
-                        replayText.setText('RELECTURE'); // French: Replay
                     }
                 }
 
