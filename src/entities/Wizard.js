@@ -216,18 +216,24 @@ class Wizard {
     }
 
     requestSpellCast(spellType) {
-        // Show conjugation quiz
-        this.scene.conjugationQuiz.showQuiz(
-            () => {
-                // Correct answer - cast spell
-                console.log('✓ Correct conjugation! Casting', spellType);
-                this.executeSpell(spellType);
-            },
-            () => {
-                // Wrong answer - no spell
-                console.log('✗ Wrong conjugation! Spell failed.');
-            }
-        );
+        // Only show quiz for Player 1 (human player)
+        if (this.playerNumber === 1) {
+            // Show conjugation quiz
+            this.scene.conjugationQuiz.showQuiz(
+                () => {
+                    // Correct answer - cast spell
+                    console.log('✓ Correct conjugation! Casting', spellType);
+                    this.executeSpell(spellType);
+                },
+                () => {
+                    // Wrong answer - no spell
+                    console.log('✗ Wrong conjugation! Spell failed.');
+                }
+            );
+        } else {
+            // AI player (Player 2) - cast directly without quiz
+            this.executeSpell(spellType);
+        }
     }
 
     executeSpell(spellType) {
