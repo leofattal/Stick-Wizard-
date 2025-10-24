@@ -115,6 +115,14 @@ class Wizard {
         // Regenerate mana
         this.mana = Math.min(Constants.MAX_MANA, this.mana + (Constants.MANA_REGEN_RATE * delta / 1000));
 
+        // Check for mobile controls (Player 1 only)
+        if (this.playerNumber === 1 && this.scene.mobileControls && this.scene.mobileControls.isMobile) {
+            const mobileKeys = this.scene.mobileControls.update();
+            if (mobileKeys) {
+                keys = mobileKeys; // Override with mobile joystick input
+            }
+        }
+
         // Handle movement (disabled during knockback)
         if (!this.isDashing && !this.isKnockedBack) {
             this.handleMovement(keys);

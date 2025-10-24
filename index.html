@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Stick Wizard Duel</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -14,13 +22,83 @@
             min-height: 100vh;
             background: #1a1a2e;
             font-family: 'Arial', sans-serif;
+            overflow: hidden;
         }
+
         #game-container {
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            height: 100%;
+            max-width: 1280px;
+            max-height: 720px;
+        }
+
+        #game-container canvas {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 100vh;
+        }
+
+        /* Mobile landscape optimization */
+        @media screen and (max-width: 768px) and (orientation: landscape) {
+            #game-container canvas {
+                height: 100vh !important;
+                width: auto !important;
+            }
+        }
+
+        /* Mobile portrait - show rotate message */
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+            #rotate-message {
+                display: flex !important;
+            }
+            #game-container {
+                display: none;
+            }
+        }
+
+        #rotate-message {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a2e;
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            font-size: 24px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #rotate-message svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            animation: rotate 2s infinite;
+        }
+
+        @keyframes rotate {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(90deg); }
         }
     </style>
 </head>
 <body>
+    <!-- Rotate device message (portrait mode) -->
+    <div id="rotate-message">
+        <svg viewBox="0 0 100 100" fill="white">
+            <rect x="20" y="30" width="60" height="40" rx="5" fill="none" stroke="white" stroke-width="3"/>
+            <circle cx="50" cy="50" r="8" fill="white"/>
+        </svg>
+        <div>Please rotate your device</div>
+        <div style="font-size: 16px; margin-top: 10px; color: #aaa;">Play in landscape mode</div>
+    </div>
+
     <div id="game-container"></div>
 
     <!-- Background Music (hidden) -->
@@ -35,6 +113,7 @@
     <script src="src/utils/Constants.js"></script>
     <script src="src/utils/ReplayRecorder.js"></script>
     <script src="src/utils/ConjugationQuiz.js"></script>
+    <script src="src/utils/MobileControls.js"></script>
     <script src="src/entities/Wizard.js"></script>
     <script src="src/entities/Projectile.js"></script>
     <script src="src/entities/PowerUp.js"></script>

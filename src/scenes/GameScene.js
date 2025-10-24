@@ -35,6 +35,9 @@ class GameScene extends Phaser.Scene {
         // Setup input
         this.setupInput();
 
+        // Create mobile controls if on mobile device
+        this.mobileControls = new MobileControls(this, this.player1);
+
         // Create UI
         this.createUI();
 
