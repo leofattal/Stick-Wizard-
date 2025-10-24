@@ -136,21 +136,39 @@ class MobileControls {
     }
 
     castSpell(spellType) {
-        // Trigger the spell through the wizard's requestSpellCast
-        if (this.player && this.player.requestSpellCast) {
-            this.player.requestSpellCast(spellType);
+        // Simulate key press for spell casting
+        // This will be picked up by the wizard's handleActions
+        if (!this.player) return;
+
+        // Create a fake "JustDown" event by setting a flag
+        if (!this.spellTriggers) {
+            this.spellTriggers = {};
         }
+
+        this.spellTriggers[spellType] = true;
+
+        // Clear the trigger after a short delay
+        setTimeout(() => {
+            if (this.spellTriggers) {
+                this.spellTriggers[spellType] = false;
+            }
+        }, 100);
     }
 
     update() {
-        if (!this.isMobile || !this.joystick) return;
+        if (!this.isMobile || !this.joystick) return null;
 
         // Get joystick input
         const keys = {
             up: { isDown: false },
             down: { isDown: false },
             left: { isDown: false },
-            right: { isDown: false }
+            right: { isDown: false },
+            fireball: { isDown: false, _justDown: false },
+            lightning: { isDown: false, _justDown: false },
+            iceShard: { isDown: false, _justDown: false },
+            shield: { isDown: false, _justDown: false },
+            dash: { isDown: false, _justDown: false }
         };
 
         if (this.joystick.active) {
@@ -163,6 +181,22 @@ class MobileControls {
                 if (dy > threshold) keys.down.isDown = true;
                 if (dx < -threshold) keys.left.isDown = true;
                 if (dx > threshold) keys.right.isDown = true;
+            }
+        }
+
+        // Add spell triggers
+        if (this.spellTriggers) {
+            if (this.spellTriggers.fireball) {
+                keys.fireball._justDown = true;
+            }
+            if (this.spellTriggers.lightning) {
+                keys.lightning._justDown = true;
+            }
+            if (this.spellTriggers.iceshard) {
+                keys.iceShard._justDown = true;
+            }
+            if (this.spellTriggers.shield) {
+                keys.shield._justDown = true;
             }
         }
 

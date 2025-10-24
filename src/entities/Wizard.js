@@ -193,8 +193,17 @@ class Wizard {
     }
 
     handleActions(keys) {
+        // Helper to check if key was just pressed (works for both keyboard and mobile)
+        const justDown = (key) => {
+            if (!key) return false;
+            // Mobile touch has _justDown flag
+            if (key._justDown) return true;
+            // Keyboard uses Phaser's JustDown
+            return Phaser.Input.Keyboard.JustDown(key);
+        };
+
         // Fireball
-        if (Phaser.Input.Keyboard.JustDown(keys.fireball)) {
+        if (justDown(keys.fireball)) {
             if (this.canCastSpell(Constants.FIREBALL)) {
                 this.requestSpellCast('fireball');
             } else {
@@ -203,22 +212,22 @@ class Wizard {
         }
 
         // Lightning
-        if (Phaser.Input.Keyboard.JustDown(keys.lightning) && this.canCastSpell(Constants.LIGHTNING)) {
+        if (justDown(keys.lightning) && this.canCastSpell(Constants.LIGHTNING)) {
             this.requestSpellCast('lightning');
         }
 
         // Ice Shard
-        if (keys.iceShard && Phaser.Input.Keyboard.JustDown(keys.iceShard) && this.canCastSpell(Constants.ICE_SHARD)) {
+        if (keys.iceShard && justDown(keys.iceShard) && this.canCastSpell(Constants.ICE_SHARD)) {
             this.requestSpellCast('iceshard');
         }
 
         // Shield
-        if (Phaser.Input.Keyboard.JustDown(keys.shield) && this.canCastShield()) {
+        if (justDown(keys.shield) && this.canCastShield()) {
             this.requestSpellCast('shield');
         }
 
         // Dash
-        if (Phaser.Input.Keyboard.JustDown(keys.dash) && this.dashCooldown <= 0) {
+        if (justDown(keys.dash) && this.dashCooldown <= 0) {
             this.dash(keys);
         }
     }
