@@ -95,15 +95,16 @@ class VictoryScene extends Phaser.Scene {
                     }
                 }
 
-                // Render frame
-                this.renderReplayFrame(this.replay.frames[frameIndex], frameIndex);
-                frameIndex++;
+                // Render frame (skip frames during fast-forward for performance)
+                const skipFrames = currentSpeed >= 3.0 ? 2 : 0; // Skip every other frame during fast-forward
+                this.renderReplayFrame(this.replay.frames[frameIndex], frameIndex, currentSpeed >= 3.0);
+                frameIndex += 1 + skipFrames;
             },
             loop: true
         });
     }
 
-    renderReplayFrame(frame, frameIndex) {
+    renderReplayFrame(frame, frameIndex, isFastForward = false) {
         this.replayGraphics.clear();
 
         // Draw arena background
@@ -119,12 +120,12 @@ class VictoryScene extends Phaser.Scene {
             return true;
         });
 
-        // Check for new lightning strikes at this frame
-        if (this.replay.lightningStrikes) {
+        // Check for new lightning strikes at this frame (skip during fast-forward for performance)
+        if (!isFastForward && this.replay.lightningStrikes) {
             const strikesThisFrame = this.replay.lightningStrikes.filter(s => s.frameNumber === frameIndex);
             strikesThisFrame.forEach(strike => {
                 const lightningGfx = this.add.graphics();
-                this.drawLightning(lightningGfx, strike.fromX, strike.fromY, strike.toX, strike.toY);
+                this.drawLightning(lightningGfx, strike.fromX, strike.fromY, strike.toX, strike.toY, isFastForward);
                 this.activeLightning.push({
                     frameNumber: frameIndex,
                     graphics: lightningGfx
@@ -132,30 +133,63 @@ class VictoryScene extends Phaser.Scene {
             });
         }
 
-        // Draw projectiles with improved visuals
+        // Draw power-ups (simplified during fast-forward)
+        if (frame.powerUps) {
+            frame.powerUps.forEach(powerUp => {
+                const color = this.getPowerUpColor(powerUp.type);
+
+                if (isFastForward) {
+                    // Simple version for performance
+                    this.replayGraphics.fillStyle(color, 0.8);
+                    this.replayGraphics.fillCircle(powerUp.x, powerUp.y, 18);
+                } else {
+                    // Full detail version
+                    // Outer glow
+                    this.replayGraphics.fillStyle(color, 0.3);
+                    this.replayGraphics.fillCircle(powerUp.x, powerUp.y, 25);
+
+                    // Main circle
+                    this.replayGraphics.fillStyle(color, 0.8);
+                    this.replayGraphics.fillCircle(powerUp.x, powerUp.y, 18);
+
+                    // Inner highlight
+                    this.replayGraphics.fillStyle(0xffffff, 0.6);
+                    this.replayGraphics.fillCircle(powerUp.x - 5, powerUp.y - 5, 6);
+                }
+            });
+        }
+
+        // Draw projectiles (simplified during fast-forward)
         if (frame.projectiles) {
             frame.projectiles.forEach(proj => {
                 if (proj.type === 'fireball') {
-                    // Fireball - layered with glow like the real thing
-                    // Outer glow
-                    this.replayGraphics.fillStyle(0xff6600, 0.5);
-                    this.replayGraphics.fillCircle(proj.x, proj.y, 24);
-                    // Main body
-                    this.replayGraphics.fillStyle(0xff3300, 1);
-                    this.replayGraphics.fillCircle(proj.x, proj.y, 20);
-                    // Inner bright core
-                    this.replayGraphics.fillStyle(0xffff00, 0.8);
-                    this.replayGraphics.fillCircle(proj.x, proj.y, 12);
+                    if (isFastForward) {
+                        // Simple fireball
+                        this.replayGraphics.fillStyle(0xff3300, 1);
+                        this.replayGraphics.fillCircle(proj.x, proj.y, 20);
+                    } else {
+                        // Full detail fireball
+                        this.replayGraphics.fillStyle(0xff6600, 0.5);
+                        this.replayGraphics.fillCircle(proj.x, proj.y, 24);
+                        this.replayGraphics.fillStyle(0xff3300, 1);
+                        this.replayGraphics.fillCircle(proj.x, proj.y, 20);
+                        this.replayGraphics.fillStyle(0xffff00, 0.8);
+                        this.replayGraphics.fillCircle(proj.x, proj.y, 12);
+                    }
                 } else if (proj.type === 'iceshard') {
-                    // Ice shard - crystal shape like the real thing
                     const size = 18;
-                    // Crystal shape
-                    this.replayGraphics.fillStyle(0x00ccff, 0.8);
-                    this.replayGraphics.fillTriangle(proj.x - size, proj.y, proj.x + size, proj.y, proj.x, proj.y - size * 1.5);
-                    this.replayGraphics.fillTriangle(proj.x - size, proj.y, proj.x + size, proj.y, proj.x, proj.y + size * 1.5);
-                    // Highlight
-                    this.replayGraphics.fillStyle(0xffffff, 0.6);
-                    this.replayGraphics.fillTriangle(proj.x - size * 0.3, proj.y, proj.x + size * 0.3, proj.y, proj.x, proj.y - size * 0.8);
+                    if (isFastForward) {
+                        // Simple ice shard
+                        this.replayGraphics.fillStyle(0x00ccff, 0.8);
+                        this.replayGraphics.fillCircle(proj.x, proj.y, size);
+                    } else {
+                        // Full detail ice shard
+                        this.replayGraphics.fillStyle(0x00ccff, 0.8);
+                        this.replayGraphics.fillTriangle(proj.x - size, proj.y, proj.x + size, proj.y, proj.x, proj.y - size * 1.5);
+                        this.replayGraphics.fillTriangle(proj.x - size, proj.y, proj.x + size, proj.y, proj.x, proj.y + size * 1.5);
+                        this.replayGraphics.fillStyle(0xffffff, 0.6);
+                        this.replayGraphics.fillTriangle(proj.x - size * 0.3, proj.y, proj.x + size * 0.3, proj.y, proj.x, proj.y - size * 0.8);
+                    }
                 }
             });
         }
@@ -166,6 +200,18 @@ class VictoryScene extends Phaser.Scene {
         }
         if (frame.player2) {
             this.drawWizard(frame.player2, 2);
+        }
+    }
+
+    getPowerUpColor(type) {
+        switch(type) {
+            case 'speed': return 0x00ff00;      // Green
+            case 'damage': return 0xff0000;     // Red
+            case 'rapidfire': return 0xffff00;  // Yellow
+            case 'giant': return 0xff00ff;      // Magenta
+            case 'health': return 0xff69b4;     // Pink
+            case 'mana': return 0x00ffff;       // Cyan
+            default: return 0xffffff;           // White
         }
     }
 

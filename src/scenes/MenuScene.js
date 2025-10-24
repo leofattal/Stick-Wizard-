@@ -5,14 +5,18 @@ class MenuScene extends Phaser.Scene {
 
     create() {
         // Start background music
-        const music = document.getElementById('background-music');
-        if (music) {
-            music.volume = 0.3; // Set volume to 30%
-            music.play().catch(e => {
+        this.music = document.getElementById('background-music');
+        this.musicEnabled = true;
+
+        if (this.music) {
+            this.music.volume = 0.3; // Set volume to 30%
+            this.music.play().catch(e => {
                 console.log('Music autoplay prevented. Click to start music.');
                 // Add click listener to start music on first interaction
                 document.addEventListener('click', () => {
-                    music.play();
+                    if (this.musicEnabled) {
+                        this.music.play();
+                    }
                 }, { once: true });
             });
         }
@@ -72,6 +76,9 @@ class MenuScene extends Phaser.Scene {
             'PLAY',
             () => this.scene.start('GameScene', { aiMode: true })
         );
+
+        // Music toggle button
+        this.createMusicToggle();
 
         // Controls instruction
         this.createControlsDisplay();
@@ -224,5 +231,60 @@ class MenuScene extends Phaser.Scene {
                 lineSpacing: 8
             }
         ).setOrigin(0.5, 0);
+    }
+
+    createMusicToggle() {
+        const x = Constants.GAME_WIDTH - 60;
+        const y = 30;
+
+        // Container for the toggle
+        const container = this.add.container(x, y);
+
+        // Background circle
+        const bg = this.add.circle(0, 0, 25, 0x333333);
+        bg.setStrokeStyle(2, 0xffffff);
+
+        // Music icon (note symbol)
+        this.musicIcon = this.add.text(0, 0, '♪', {
+            fontSize: '28px',
+            fontFamily: 'Arial',
+            color: '#00ff00'
+        }).setOrigin(0.5);
+
+        container.add([bg, this.musicIcon]);
+
+        // Make interactive
+        bg.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => {
+                bg.setFillStyle(0x444444);
+                container.setScale(1.1);
+            })
+            .on('pointerout', () => {
+                bg.setFillStyle(0x333333);
+                container.setScale(1);
+            })
+            .on('pointerdown', () => {
+                container.setScale(0.95);
+            })
+            .on('pointerup', () => {
+                container.setScale(1.1);
+                this.toggleMusic();
+            });
+
+        return container;
+    }
+
+    toggleMusic() {
+        this.musicEnabled = !this.musicEnabled;
+
+        if (this.music) {
+            if (this.musicEnabled) {
+                this.music.play();
+                this.musicIcon.setColor('#00ff00'); // Green = on
+            } else {
+                this.music.pause();
+                this.musicIcon.setColor('#ff0000'); // Red = off
+            }
+        }
     }
 }
