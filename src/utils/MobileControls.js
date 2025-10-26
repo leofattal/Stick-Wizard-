@@ -25,41 +25,53 @@ class MobileControls {
     }
 
     createJoystick() {
-        const x = 120;
-        const y = Constants.GAME_HEIGHT - 120;
-
+        // Create joystick graphics (initially hidden)
         // Outer circle (base)
-        const base = this.scene.add.circle(x, y, 60, 0x333333, 0.5);
+        const base = this.scene.add.circle(0, 0, 60, 0x333333, 0.5);
         base.setScrollFactor(0);
         base.setDepth(1000);
         base.setStrokeStyle(3, 0xffffff, 0.8);
+        base.setVisible(false);
 
         // Inner circle (stick)
-        const stick = this.scene.add.circle(x, y, 30, 0x4444ff, 0.8);
+        const stick = this.scene.add.circle(0, 0, 30, 0x4444ff, 0.8);
         stick.setScrollFactor(0);
         stick.setDepth(1001);
+        stick.setVisible(false);
 
         this.joystick = {
             base: base,
             stick: stick,
-            baseX: x,
-            baseY: y,
+            baseX: 0,
+            baseY: 0,
             active: false,
             pointer: null
         };
 
-        // Make interactive
-        base.setInteractive();
-        base.on('pointerdown', (pointer) => {
-            this.joystick.active = true;
-            this.joystick.pointer = pointer;
+        // Listen for touches on the left half of the screen
+        this.scene.input.on('pointerdown', (pointer) => {
+            // Left half of screen = joystick area
+            if (pointer.x < Constants.GAME_WIDTH / 2) {
+                this.joystick.active = true;
+                this.joystick.pointer = pointer;
+                this.joystick.baseX = pointer.x;
+                this.joystick.baseY = pointer.y;
+
+                // Show joystick at touch position
+                base.setPosition(pointer.x, pointer.y);
+                stick.setPosition(pointer.x, pointer.y);
+                base.setVisible(true);
+                stick.setVisible(true);
+            }
         });
 
-        this.scene.input.on('pointerup', () => {
-            if (this.joystick.active) {
+        this.scene.input.on('pointerup', (pointer) => {
+            if (this.joystick.active && pointer === this.joystick.pointer) {
                 this.joystick.active = false;
-                stick.x = this.joystick.baseX;
-                stick.y = this.joystick.baseY;
+
+                // Hide joystick
+                base.setVisible(false);
+                stick.setVisible(false);
             }
         });
 
