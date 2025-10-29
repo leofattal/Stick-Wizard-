@@ -10,25 +10,33 @@ class GameScene extends Phaser.Scene {
         this.aiMode = data.aiMode || false;
         console.log('🎮 Game started -', this.aiMode ? 'VS AI BOT' : '2 PLAYERS');
 
+        console.log('📝 Step 1: Creating replay recorder...');
         // Create replay recorder
         this.replayRecorder = new ReplayRecorder(this);
         this.replayRecorder.startRecording();
 
+        console.log('📝 Step 2: Creating conjugation quiz...');
         // Create conjugation quiz system
         this.conjugationQuiz = new ConjugationQuiz(this);
         this.player1PendingAction = null;
         this.player2PendingAction = null;
 
+        console.log('📝 Step 3: Creating platformer level...');
         // Create platformer race level
         this.createPlatformerLevel();
+        console.log('✅ Platformer level created');
 
+        console.log('📝 Step 4: Creating checkpoints...');
         // Create checkpoints array
         this.checkpoints = [];
         this.createCheckpoints();
+        console.log('✅ Checkpoints created');
 
+        console.log('📝 Step 5: Creating players...');
         // Create players at start line
         this.player1 = new Wizard(this, 100, Constants.GROUND_Y - 100, 1);
         this.player2 = new Wizard(this, 100, Constants.GROUND_Y - 200, 2);
+        console.log('✅ Players created');
 
         // Track player checkpoints
         this.player1.currentCheckpoint = 0;
