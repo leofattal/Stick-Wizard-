@@ -87,9 +87,10 @@ class GameScene extends Phaser.Scene {
         const chunkSize = 800;
         for (let x = 0; x < Constants.LEVEL_WIDTH; x += chunkSize) {
             const width = Math.min(chunkSize, Constants.LEVEL_WIDTH - x);
-            const ground = this.add.rectangle(x + width/2, Constants.GROUND_Y, width, Constants.PLATFORM_HEIGHT, 0x4a4a4a);
-            this.platforms.add(ground);
-            ground.refreshBody();
+            this.platforms.create(x + width/2, Constants.GROUND_Y, null)
+                .setSize(width, Constants.PLATFORM_HEIGHT)
+                .setDisplaySize(width, Constants.PLATFORM_HEIGHT)
+                .setTint(0x4a4a4a);
         }
 
         // Create varied platforms for platforming challenge
@@ -133,9 +134,10 @@ class GameScene extends Phaser.Scene {
         ];
 
         platformData.forEach(p => {
-            const platform = this.add.rectangle(p.x, p.y, p.width, Constants.PLATFORM_HEIGHT, 0x6666aa);
-            this.platforms.add(platform);
-            platform.refreshBody();
+            this.platforms.create(p.x, p.y, null)
+                .setSize(p.width, Constants.PLATFORM_HEIGHT)
+                .setDisplaySize(p.width, Constants.PLATFORM_HEIGHT)
+                .setTint(0x6666aa);
         });
 
         // Background handled by game config
