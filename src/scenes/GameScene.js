@@ -470,8 +470,8 @@ class GameScene extends Phaser.Scene {
             player.checkpointX = checkpoint.x;
             player.checkpointY = checkpoint.y - 50;
 
-            // Visual feedback
-            checkpoint.flag.setTint(player.playerNumber === 1 ? 0xff6666 : 0x6666ff);
+            // Visual feedback - change flag fill color
+            checkpoint.flag.setFillStyle(player.playerNumber === 1 ? 0xff6666 : 0x6666ff, 0.8);
 
             // Show message
             const msg = this.add.text(checkpoint.x, checkpoint.y - 250, `CHECKPOINT!\nPlayer ${player.playerNumber}`, {
