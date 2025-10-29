@@ -19,12 +19,24 @@ class GameScene extends Phaser.Scene {
         this.player1PendingAction = null;
         this.player2PendingAction = null;
 
-        // Create arena background
-        this.createArena();
+        // Create platformer race level
+        this.createPlatformerLevel();
 
-        // Create players
-        this.player1 = new Wizard(this, 200, Constants.GAME_HEIGHT / 2, 1);
-        this.player2 = new Wizard(this, Constants.GAME_WIDTH - 200, Constants.GAME_HEIGHT / 2, 2);
+        // Create checkpoints array
+        this.checkpoints = [];
+        this.createCheckpoints();
+
+        // Create players at start line
+        this.player1 = new Wizard(this, 100, Constants.GROUND_Y - 100, 1);
+        this.player2 = new Wizard(this, 100, Constants.GROUND_Y - 200, 2);
+
+        // Track player checkpoints
+        this.player1.currentCheckpoint = 0;
+        this.player1.checkpointX = 100;
+        this.player1.checkpointY = Constants.GROUND_Y - 100;
+        this.player2.currentCheckpoint = 0;
+        this.player2.checkpointX = 100;
+        this.player2.checkpointY = Constants.GROUND_Y - 200;
 
         // Setup AI controller for Player 2 if in AI mode
         if (this.aiMode) {
@@ -47,12 +59,130 @@ class GameScene extends Phaser.Scene {
         // Create particle texture (simple circle for now)
         this.createParticleTexture();
 
-        // Create debug graphics for collision visualization
-        this.debugGraphics = this.add.graphics();
-        this.debugGraphics.setDepth(1000); // Draw on top
-
         // Start power-up spawning
         this.setupPowerUpSpawning();
+
+        // Setup camera to follow player 1
+        this.cameras.main.setBounds(0, 0, Constants.LEVEL_WIDTH, Constants.GAME_HEIGHT);
+        this.cameras.main.startFollow(this.player1.sprite, true, 0.1, 0.1);
+        this.cameras.main.setDeadzone(200, 100);
+
+        // Set world bounds for physics
+        this.physics.world.setBounds(0, 0, Constants.LEVEL_WIDTH, Constants.GAME_HEIGHT);
+    }
+
+    createPlatformerLevel() {
+        // Create platforms group
+        this.platforms = this.physics.add.staticGroup();
+
+        // Ground - create one long rectangle instead of many small ones
+        const ground = this.add.rectangle(Constants.LEVEL_WIDTH / 2, Constants.GROUND_Y, Constants.LEVEL_WIDTH, Constants.PLATFORM_HEIGHT, 0x4a4a4a);
+        this.physics.add.existing(ground, true); // true = static body
+        this.platforms.add(ground);
+
+        // Create varied platforms for platforming challenge
+        const platformData = [
+            // Starting area - easy
+            { x: 400, y: 550, width: 150 },
+            { x: 600, y: 500, width: 100 },
+            { x: 800, y: 450, width: 150 },
+
+            // First checkpoint area
+            { x: 1100, y: 500, width: 120 },
+            { x: 1300, y: 400, width: 100 },
+
+            // Mid section - more challenging
+            { x: 1800, y: 500, width: 100 },
+            { x: 2000, y: 450, width: 80 },
+            { x: 2150, y: 400, width: 80 },
+            { x: 2300, y: 350, width: 100 },
+
+            // Second checkpoint area
+            { x: 2700, y: 500, width: 150 },
+            { x: 2900, y: 450, width: 100 },
+
+            // Advanced section
+            { x: 3300, y: 400, width: 100 },
+            { x: 3500, y: 350, width: 80 },
+            { x: 3650, y: 300, width: 80 },
+            { x: 3800, y: 400, width: 100 },
+
+            // Third checkpoint area
+            { x: 4200, y: 500, width: 150 },
+
+            // Final challenge
+            { x: 4600, y: 450, width: 100 },
+            { x: 4800, y: 400, width: 100 },
+            { x: 5000, y: 350, width: 100 },
+            { x: 5200, y: 450, width: 100 },
+
+            // Finish line platform
+            { x: 5800, y: 500, width: 400 }
+        ];
+
+        platformData.forEach(p => {
+            const platform = this.add.rectangle(p.x, p.y, p.width, Constants.PLATFORM_HEIGHT, 0x6666aa);
+            this.platforms.add(platform);
+            platform.refreshBody();
+        });
+
+        // Background handled by game config
+    }
+
+    createCheckpoints() {
+        // Create checkpoints every CHECKPOINT_SPACING pixels
+        for (let i = 1; i <= 4; i++) {
+            const x = i * Constants.CHECKPOINT_SPACING;
+
+            // Checkpoint flag pole
+            const pole = this.add.rectangle(x, Constants.GROUND_Y - 100, 10, 200, 0x888888);
+            pole.setDepth(5);
+
+            // Checkpoint flag
+            const flag = this.add.triangle(x, Constants.GROUND_Y - 180, 0, 0, 60, 20, 0, 40, 0x00ff00, 0.8);
+            flag.setOrigin(0, 0.5);
+            flag.setDepth(5);
+
+            // Checkpoint number
+            const text = this.add.text(x, Constants.GROUND_Y - 220, `#${i}`, {
+                fontSize: '32px',
+                fontFamily: 'Arial',
+                fontStyle: 'bold',
+                color: '#00ff00'
+            }).setOrigin(0.5);
+            text.setDepth(5);
+
+            // Create trigger zone
+            const trigger = this.add.rectangle(x, Constants.GROUND_Y - 100, 50, 200, 0x00ff00, 0);
+            this.physics.add.existing(trigger);
+            trigger.body.setAllowGravity(false);
+
+            this.checkpoints.push({
+                index: i,
+                x: x,
+                y: Constants.GROUND_Y - 100,
+                pole, flag, text, trigger
+            });
+        }
+
+        // Finish line
+        const finishX = Constants.LEVEL_WIDTH - 300;
+        const finishLine = this.add.rectangle(finishX, Constants.GROUND_Y - 100, 20, 200, 0xffaa00);
+        finishLine.setDepth(5);
+
+        const finishText = this.add.text(finishX, Constants.GROUND_Y - 220, 'FINISH', {
+            fontSize: '48px',
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
+            color: '#ffaa00'
+        }).setOrigin(0.5);
+        finishText.setDepth(5);
+
+        const finishTrigger = this.add.rectangle(finishX, Constants.GROUND_Y - 100, 100, 200, 0xffaa00, 0);
+        this.physics.add.existing(finishTrigger);
+        finishTrigger.body.setAllowGravity(false);
+
+        this.finishLine = { x: finishX, trigger: finishTrigger, line: finishLine, text: finishText };
     }
 
     createArena() {
@@ -297,7 +427,72 @@ class GameScene extends Phaser.Scene {
     }
 
     setupCollisions() {
-        // We'll handle collisions manually in update loop for projectiles
+        // Platform collisions
+        this.physics.add.collider(this.player1.sprite, this.platforms);
+        this.physics.add.collider(this.player2.sprite, this.platforms);
+
+        // Checkpoint overlaps
+        this.checkpoints.forEach(checkpoint => {
+            this.physics.add.overlap(this.player1.sprite, checkpoint.trigger, () => {
+                this.activateCheckpoint(this.player1, checkpoint);
+            });
+            this.physics.add.overlap(this.player2.sprite, checkpoint.trigger, () => {
+                this.activateCheckpoint(this.player2, checkpoint);
+            });
+        });
+
+        // Finish line overlaps
+        this.physics.add.overlap(this.player1.sprite, this.finishLine.trigger, () => {
+            this.playerFinished(this.player1, 1);
+        });
+        this.physics.add.overlap(this.player2.sprite, this.finishLine.trigger, () => {
+            this.playerFinished(this.player2, 2);
+        });
+    }
+
+    activateCheckpoint(player, checkpoint) {
+        if (player.currentCheckpoint < checkpoint.index) {
+            player.currentCheckpoint = checkpoint.index;
+            player.checkpointX = checkpoint.x;
+            player.checkpointY = checkpoint.y - 50;
+
+            // Visual feedback
+            checkpoint.flag.setTint(player.playerNumber === 1 ? 0xff6666 : 0x6666ff);
+
+            // Show message
+            const msg = this.add.text(checkpoint.x, checkpoint.y - 250, `CHECKPOINT!\nPlayer ${player.playerNumber}`, {
+                fontSize: '24px',
+                fontFamily: 'Arial',
+                fontStyle: 'bold',
+                color: player.playerNumber === 1 ? '#ff6666' : '#6666ff',
+                align: 'center'
+            }).setOrigin(0.5);
+            msg.setScrollFactor(1);
+
+            this.tweens.add({
+                targets: msg,
+                y: checkpoint.y - 300,
+                alpha: 0,
+                duration: 1500,
+                onComplete: () => msg.destroy()
+            });
+        }
+    }
+
+    playerFinished(player, playerNumber) {
+        if (this.raceFinished) return;
+
+        this.raceFinished = true;
+        console.log(`🏁 Player ${playerNumber} finished the race!`);
+
+        // Stop the game
+        this.physics.pause();
+
+        this.scene.start('VictoryScene', {
+            winner: playerNumber,
+            aiMode: this.aiMode,
+            replay: this.replayRecorder ? this.replayRecorder.stopRecording() : null
+        });
     }
 
     setupPowerUpSpawning() {
@@ -353,17 +548,72 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    checkFallingDeath(player) {
+        if (!player.isAlive) return;
+
+        // Check if fell off the world
+        if (player.sprite.y > Constants.DEATH_Y) {
+            player.isAlive = false;
+            console.log(`💀 Player ${player.playerNumber} fell to their death!`);
+
+            // Visual feedback (fade out)
+            this.tweens.add({
+                targets: player.sprite,
+                alpha: 0,
+                duration: 300,
+                onComplete: () => {
+                    // Respawn after delay
+                    this.time.delayedCall(Constants.RESPAWN_DELAY, () => {
+                        this.respawnPlayer(player);
+                    });
+                }
+            });
+        }
+    }
+
+    respawnPlayer(player) {
+        // Reset position to last checkpoint
+        player.sprite.setPosition(player.checkpointX, player.checkpointY);
+        player.sprite.setVelocity(0, 0);
+        player.sprite.setAlpha(1);
+        player.isAlive = true;
+        player.health = Constants.MAX_HEALTH;
+        player.mana = Constants.MAX_MANA;
+
+        console.log(`✨ Player ${player.playerNumber} respawned at checkpoint ${player.currentCheckpoint}`);
+
+        // Visual feedback - spawn effect
+        const spawnEffect = this.add.circle(player.checkpointX, player.checkpointY, 80,
+            player.playerNumber === 1 ? Constants.PLAYER1_COLOR : Constants.PLAYER2_COLOR, 0.5);
+        spawnEffect.setScrollFactor(1);
+
+        this.tweens.add({
+            targets: spawnEffect,
+            scale: 1.5,
+            alpha: 0,
+            duration: 500,
+            onComplete: () => spawnEffect.destroy()
+        });
+    }
+
     update(time, delta) {
+        // Check for falling deaths
+        this.checkFallingDeath(this.player1);
+        this.checkFallingDeath(this.player2);
+
         // Record frame for replay
         if (this.replayRecorder) {
             this.replayRecorder.recordFrame();
         }
 
-        // Clear debug graphics
-        this.debugGraphics.clear();
+        // Draw knockback targeting visual (simplified, no debug graphics)
+        if (this.knockbackCaster && !this.debugGraphics) {
+            this.debugGraphics = this.add.graphics();
+            this.debugGraphics.setDepth(1000);
+        }
 
-        // Draw knockback targeting visual
-        if (this.knockbackCaster) {
+        if (this.knockbackCaster && this.debugGraphics) {
+            this.debugGraphics.clear();
             const casterColor = this.knockbackCaster.playerNumber === 1 ? 0xff0000 : 0x0000ff;
 
             // Calculate distance from caster to target
@@ -412,10 +662,6 @@ class GameScene extends Phaser.Scene {
         if (this.player1) {
             this.player1.update(time, delta, this.player1Keys);
             this.updatePlayerUI(1);
-
-            // Draw collision circle for Player 1
-            this.debugGraphics.lineStyle(2, 0xff0000, 0.5);
-            this.debugGraphics.strokeCircle(this.player1.sprite.x, this.player1.sprite.y, 50);
         }
 
         if (this.player2) {
@@ -426,10 +672,6 @@ class GameScene extends Phaser.Scene {
 
             this.player2.update(time, delta, this.player2Keys);
             this.updatePlayerUI(2);
-
-            // Draw collision circle for Player 2
-            this.debugGraphics.lineStyle(2, 0x0000ff, 0.5);
-            this.debugGraphics.strokeCircle(this.player2.sprite.x, this.player2.sprite.y, 50);
         }
 
         // Update projectiles and check collisions
@@ -440,10 +682,6 @@ class GameScene extends Phaser.Scene {
             }
 
             projectile.update();
-
-            // Draw collision circle for projectile
-            this.debugGraphics.lineStyle(2, 0xffff00, 0.8);
-            this.debugGraphics.strokeCircle(projectile.sprite.x, projectile.sprite.y, 50);
 
             // Check collision with players (but skip the owner!)
             // Debug: Log owner for reflected projectiles

@@ -50,14 +50,9 @@ class AIController {
     }
 
     makeDecision() {
-        if (!this.wizard.isAlive || !this.opponent.isAlive) return;
+        if (!this.wizard.isAlive) return;
 
-        const distance = Phaser.Math.Distance.Between(
-            this.wizard.sprite.x, this.wizard.sprite.y,
-            this.opponent.sprite.x, this.opponent.sprite.y
-        );
-
-        // Prioritize actions
+        // Platformer race mode - prioritize forward movement
 
         // 1. Shield incoming projectiles
         if (this.shouldShield()) {
@@ -65,37 +60,28 @@ class AIController {
             return;
         }
 
-        // 2. Collect power-ups
-        const nearbyPowerUp = this.findNearestPowerUp();
-        if (nearbyPowerUp) {
-            this.currentAction = 'getPowerUp';
-            this.targetX = nearbyPowerUp.sprite.x;
-            this.targetY = nearbyPowerUp.sprite.y;
-            return;
-        }
+        // 2. Attack opponent if they're ahead and close
+        if (this.opponent && this.opponent.isAlive) {
+            const distance = Phaser.Math.Distance.Between(
+                this.wizard.sprite.x, this.wizard.sprite.y,
+                this.opponent.sprite.x, this.opponent.sprite.y
+            );
 
-        // 3. Attack if in range and have mana
-        if (distance < 400 && this.wizard.mana > 30) {
-            // Choose attack type
-            const rand = Math.random();
-            if (rand < 0.4) {
-                this.currentAction = 'fireball';
-            } else if (rand < 0.7 && this.wizard.mana >= 35) {
-                this.currentAction = 'lightning';
-            } else if (this.wizard.mana >= 25) {
-                this.currentAction = 'iceShard';
+            // If opponent is ahead and in range, attack
+            if (this.opponent.sprite.x > this.wizard.sprite.x && distance < 300 && this.wizard.mana > 30) {
+                const rand = Math.random();
+                if (rand < 0.5) {
+                    this.currentAction = 'fireball';
+                    return;
+                } else if (this.wizard.mana >= 35) {
+                    this.currentAction = 'lightning';
+                    return;
+                }
             }
-            return;
         }
 
-        // 4. Maintain distance (circle strafe)
-        if (distance < 200) {
-            this.currentAction = 'retreat';
-        } else if (distance > 500) {
-            this.currentAction = 'advance';
-        } else {
-            this.currentAction = 'strafe';
-        }
+        // 3. Primary action: race forward
+        this.currentAction = 'raceForward';
     }
 
     shouldShield() {
@@ -198,6 +184,10 @@ class AIController {
                 this.currentAction = 'idle';
                 break;
 
+            case 'raceForward':
+                this.raceForward(keys);
+                break;
+
             case 'advance':
                 this.moveToward(this.opponent.sprite.x, this.opponent.sprite.y, keys);
                 break;
@@ -275,6 +265,21 @@ class AIController {
         const targetY = this.wizard.sprite.y + Math.sin(perpAngle) * 100;
 
         this.moveToward(targetX, targetY, keys);
+    }
+
+    raceForward(keys) {
+        // Always move right (toward finish line)
+        keys.right.isDown = true;
+
+        // Jump if on ground and need to avoid obstacles
+        if (this.wizard.sprite.body.touching.down) {
+            // Simple jump logic: jump periodically or when detecting a gap
+            const shouldJump = Math.random() < 0.15; // 15% chance to jump each decision
+
+            if (shouldJump) {
+                keys.up.isDown = true;
+            }
+        }
     }
 
     resetKeys(keys) {

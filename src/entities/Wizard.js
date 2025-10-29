@@ -175,21 +175,19 @@ class Wizard {
         const speedMultiplier = this.isSlowed ? Constants.ICE_SHARD.SLOW_AMOUNT : 1;
         const speed = Constants.MOVEMENT_SPEED * speedMultiplier;
 
+        // Horizontal movement only (platformer style)
         let velocityX = 0;
-        let velocityY = 0;
 
-        if (keys.up.isDown) velocityY = -speed;
-        if (keys.down.isDown) velocityY = speed;
         if (keys.left.isDown) velocityX = -speed;
         if (keys.right.isDown) velocityX = speed;
 
-        // Normalize diagonal movement
-        if (velocityX !== 0 && velocityY !== 0) {
-            velocityX *= 0.707;
-            velocityY *= 0.707;
-        }
+        // Set horizontal velocity only
+        this.sprite.body.setVelocityX(velocityX);
 
-        this.sprite.body.setVelocity(velocityX, velocityY);
+        // Jump (only if on ground)
+        if (keys.up.isDown && this.sprite.body.touching.down) {
+            this.sprite.body.setVelocityY(Constants.JUMP_VELOCITY);
+        }
     }
 
     handleActions(keys) {
@@ -408,31 +406,20 @@ class Wizard {
         this.isDashing = true;
         this.isInvincible = true;
 
-        // Determine dash direction based on input
+        // Determine dash direction (horizontal only for platformer)
         let dashX = 0;
-        let dashY = 0;
 
-        if (keys.up.isDown) dashY = -1;
-        if (keys.down.isDown) dashY = 1;
         if (keys.left.isDown) dashX = -1;
         if (keys.right.isDown) dashX = 1;
 
-        // Default forward if no direction
-        if (dashX === 0 && dashY === 0) {
-            const opponent = this.scene.getOpponent(this);
-            dashX = opponent.sprite.x > this.sprite.x ? 1 : -1;
+        // Default to right if no direction
+        if (dashX === 0) {
+            dashX = 1; // Always dash forward (right)
         }
 
-        // Normalize
-        const length = Math.sqrt(dashX * dashX + dashY * dashY);
-        if (length > 0) {
-            dashX /= length;
-            dashY /= length;
-        }
-
-        // Apply dash velocity
+        // Apply dash velocity (horizontal only, preserve vertical)
         const dashSpeed = Constants.DASH_DISTANCE / (Constants.DASH_DURATION / 1000);
-        this.sprite.body.setVelocity(dashX * dashSpeed, dashY * dashSpeed);
+        this.sprite.body.setVelocityX(dashX * dashSpeed);
 
         // Visual effect
         this.sprite.setAlpha(0.5);
@@ -440,7 +427,7 @@ class Wizard {
         // End dash after duration
         this.scene.time.delayedCall(Constants.DASH_DURATION, () => {
             this.isDashing = false;
-            this.sprite.body.setVelocity(0, 0);
+            this.sprite.body.setVelocityX(0);
             this.sprite.setAlpha(1);
         });
 
@@ -560,13 +547,7 @@ class Wizard {
         if (this.health <= 0) {
             this.health = 0;
 
-            // SLOW MOTION for the killing blow!
-            console.log('💀 KILLING BLOW! Activating slow motion...');
-            this.scene.physics.world.timeScale = 3; // Slow down physics (higher = slower)
-            this.scene.time.timeScale = 0.3; // Slow down time events
-            this.scene.tweens.timeScale = 0.3; // Slow down tweens
-
-            // Mark this moment in the replay
+            // Mark death in replay (no slow motion for platformer race)
             if (this.scene.replayRecorder) {
                 this.scene.replayRecorder.markKillingBlow();
             }
@@ -582,16 +563,18 @@ class Wizard {
 
     die() {
         this.isAlive = false;
+        console.log(`💀 Player ${this.playerNumber} killed by combat!`);
 
-        // Death animation
+        // Death animation (fade out)
         this.scene.tweens.add({
             targets: this.sprite,
             alpha: 0,
-            angle: 90,
-            y: this.sprite.y + 50,
-            duration: 500,
+            duration: 300,
             onComplete: () => {
-                this.scene.handleGameOver(this.playerNumber === 1 ? 2 : 1);
+                // Respawn after delay (same as falling death)
+                this.scene.time.delayedCall(Constants.RESPAWN_DELAY, () => {
+                    this.scene.respawnPlayer(this);
+                });
             }
         });
     }
