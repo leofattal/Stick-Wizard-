@@ -75,10 +75,14 @@ class GameScene extends Phaser.Scene {
         // Create platforms group
         this.platforms = this.physics.add.staticGroup();
 
-        // Ground - create one long rectangle instead of many small ones
-        const ground = this.add.rectangle(Constants.LEVEL_WIDTH / 2, Constants.GROUND_Y, Constants.LEVEL_WIDTH, Constants.PLATFORM_HEIGHT, 0x4a4a4a);
-        this.physics.add.existing(ground, true); // true = static body
-        this.platforms.add(ground);
+        // Ground - create in smaller chunks to avoid physics issues with huge rectangles
+        const chunkSize = 800;
+        for (let x = 0; x < Constants.LEVEL_WIDTH; x += chunkSize) {
+            const width = Math.min(chunkSize, Constants.LEVEL_WIDTH - x);
+            const ground = this.add.rectangle(x + width/2, Constants.GROUND_Y, width, Constants.PLATFORM_HEIGHT, 0x4a4a4a);
+            this.platforms.add(ground);
+            ground.refreshBody();
+        }
 
         // Create varied platforms for platforming challenge
         const platformData = [
