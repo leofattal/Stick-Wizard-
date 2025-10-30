@@ -467,5 +467,9 @@ class ConjugationQuiz {
 
         this.answerButtons = [];
         this.currentQuiz = null;
+        this.onCorrect = null;
+        this.onIncorrect = null;
+
+        console.log('🧹 Quiz cleaned up and ready for next cast');
     }
 }

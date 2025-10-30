@@ -231,6 +231,12 @@ class Wizard {
     }
 
     requestSpellCast(spellType) {
+        // Check if quiz is already active
+        if (this.scene.conjugationQuiz.isActive) {
+            console.log('⏳ Quiz already active, wait for it to finish');
+            return;
+        }
+
         // Only show quiz for Player 1 (human player)
         if (this.playerNumber === 1) {
             // Show conjugation quiz
